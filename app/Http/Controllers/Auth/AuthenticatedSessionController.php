@@ -7,6 +7,7 @@ use App\Http\Requests\Auth\LoginRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -33,7 +34,12 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        return redirect()->intended(route('dashboard', absolute: false));
+        // El dashboard es el punto de entrada para quien tiene acceso (RF-17);
+        // sin esto, un mecánico recién logueado caería en un 403 al intentar
+        // abrir /dashboard, que su rol no puede ver.
+        $destino = Gate::allows('ver-dashboard') ? 'dashboard' : 'previajes.index';
+
+        return redirect()->intended(route($destino, absolute: false));
     }
 
     /**

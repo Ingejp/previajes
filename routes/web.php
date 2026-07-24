@@ -15,11 +15,15 @@ use App\Http\Controllers\EquipoController;
 use App\Http\Controllers\PreviajeController;
 use App\Http\Controllers\PreviajeFotoController;
 use App\Http\Controllers\RegistroLlantaController;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Route;
 
-Route::redirect('/', '/previajes')->name('home');
-
 Route::middleware(['auth'])->group(function () {
+    // El punto de entrada es el dashboard para quien tiene acceso (RF-17);
+    // el mecánico, que no lo tiene, va directo a su propio historial.
+    Route::get('/', fn () => to_route(Gate::allows('ver-dashboard') ? 'dashboard' : 'previajes.index'))
+        ->name('home');
+
     // RF-09, RF-12, RF-15
     Route::resource('previajes', PreviajeController::class)->except(['destroy']);
     Route::post('previajes/{previaje}/anular', [PreviajeController::class, 'anular'])->name('previajes.anular');

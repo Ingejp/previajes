@@ -29,6 +29,11 @@ class CatalogoController extends Controller
                 'secciones' => ChecklistSeccion::count(),
                 'configuraciones' => Configuracion::count(),
             ],
+            // La gestión de usuarios es la única excepción dentro de
+            // catálogos: sigue reservada a administrador (crea cuentas y
+            // asigna roles), así que su tarjeta se oculta para quien no
+            // puede entrar — evita un enlace que termina en 403.
+            'puedeGestionarUsuarios' => Gate::allows('viewAny', User::class),
         ]);
     }
 }

@@ -12,16 +12,20 @@ interface Props {
         secciones: number;
         configuraciones: number;
     };
+    /** RF-18: la gestión de usuarios sigue reservada a administrador. */
+    puedeGestionarUsuarios: boolean;
 }
 
 const migas: BreadcrumbItem[] = [{ title: 'Catálogos', href: '/catalogos' }];
 
-export default function CatalogosIndex({ resumen }: Props) {
+export default function CatalogosIndex({ resumen, puedeGestionarUsuarios }: Props) {
     const tarjetas = [
         { titulo: 'Flotas', total: resumen.flotas, href: route('catalogos.flotas.index'), icono: Waypoints },
         { titulo: 'Tipos de equipo', total: resumen.tiposEquipo, href: route('catalogos.tipos-equipo.index'), icono: Sliders },
         { titulo: 'Equipos', total: resumen.equipos, href: route('catalogos.equipos.index'), icono: Truck },
-        { titulo: 'Usuarios', total: resumen.usuarios, href: route('catalogos.usuarios.index'), icono: Users },
+        ...(puedeGestionarUsuarios
+            ? [{ titulo: 'Usuarios', total: resumen.usuarios, href: route('catalogos.usuarios.index'), icono: Users }]
+            : []),
         { titulo: 'Secciones de checklist', total: resumen.secciones, href: route('catalogos.secciones.index'), icono: ClipboardCheck },
         { titulo: 'Configuraciones', total: resumen.configuraciones, href: route('catalogos.configuraciones.index'), icono: Settings2 },
     ];

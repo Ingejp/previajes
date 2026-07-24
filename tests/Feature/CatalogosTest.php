@@ -24,23 +24,41 @@ beforeEach(function () {
     $this->mecanico = User::factory()->create(['rol' => RolUsuario::Mecanico]);
 });
 
-it('sólo deja entrar a la administración de catálogos a administrador y super administrador', function () {
+it('deja entrar a la administración de catálogos desde supervisor, pero nunca al mecánico', function () {
     $rutas = [
         route('catalogos.index'),
         route('catalogos.flotas.index'),
         route('catalogos.tipos-equipo.index'),
         route('catalogos.equipos.index'),
-        route('catalogos.usuarios.index'),
         route('catalogos.secciones.index'),
         route('catalogos.configuraciones.index'),
     ];
 
     foreach ($rutas as $ruta) {
         $this->actingAs($this->mecanico)->get($ruta)->assertForbidden();
-        $this->actingAs($this->supervisor)->get($ruta)->assertForbidden();
+        $this->actingAs($this->supervisor)->get($ruta)->assertOk();
         $this->actingAs($this->admin)->get($ruta)->assertOk();
         $this->actingAs($this->superAdmin)->get($ruta)->assertOk();
     }
+});
+
+/** La gestión de usuarios es la excepción dentro de catálogos: sigue siendo sólo administrador. */
+it('reserva la gestión de usuarios a administrador, ni siquiera el supervisor entra', function () {
+    $this->actingAs($this->mecanico)->get(route('catalogos.usuarios.index'))->assertForbidden();
+    $this->actingAs($this->supervisor)->get(route('catalogos.usuarios.index'))->assertForbidden();
+    $this->actingAs($this->admin)->get(route('catalogos.usuarios.index'))->assertOk();
+    $this->actingAs($this->superAdmin)->get(route('catalogos.usuarios.index'))->assertOk();
+});
+
+/** La tarjeta de "Usuarios" no debe ofrecerse a quien no puede entrar ahí. */
+it('oculta la tarjeta de usuarios en el landing de catálogos para el supervisor', function () {
+    $this->actingAs($this->supervisor)
+        ->get(route('catalogos.index'))
+        ->assertInertia(fn (AssertableInertia $page) => $page->where('puedeGestionarUsuarios', false));
+
+    $this->actingAs($this->admin)
+        ->get(route('catalogos.index'))
+        ->assertInertia(fn (AssertableInertia $page) => $page->where('puedeGestionarUsuarios', true));
 });
 
 // --- Flotas ---
@@ -79,6 +97,15 @@ it('un mecánico no puede crear flotas aunque adivine la ruta', function () {
         ->assertForbidden();
 
     expect(Flota::where('nombre', 'Intrusa')->exists())->toBeFalse();
+});
+
+it('un supervisor sí puede crear flotas', function () {
+    $this->actingAs($this->supervisor)
+        ->post(route('catalogos.flotas.store'), ['nombre' => 'Panamá', 'pais' => 'Panamá'])
+        ->assertSessionHasNoErrors()
+        ->assertRedirect();
+
+    expect(Flota::where('nombre', 'Panamá')->exists())->toBeTrue();
 });
 
 // --- Tipos de equipo ---

@@ -11,8 +11,8 @@ use Illuminate\Database\Eloquent\Model;
  * de equipo, secciones, ítems, opciones y configuraciones.
  *
  * Todos siguen la misma regla — se consultan desde cualquier rol activo porque
- * alimentan filtros y formularios, pero sólo el administrador y el super
- * administrador los modifican.
+ * alimentan filtros y formularios, y los modifica supervisor en adelante. La
+ * gestión de usuarios queda aparte, en `UserPolicy`, reservada a Administrador.
  */
 class CatalogoPolicy
 {
@@ -28,7 +28,7 @@ class CatalogoPolicy
 
     public function create(User $usuario): bool
     {
-        return $usuario->activo && $usuario->alMenos(RolUsuario::Administrador);
+        return $usuario->activo && $usuario->alMenos(RolUsuario::Supervisor);
     }
 
     public function update(User $usuario, Model $modelo): bool

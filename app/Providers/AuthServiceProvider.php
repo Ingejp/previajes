@@ -47,7 +47,11 @@ class AuthServiceProvider extends ServiceProvider
         Gate::define('ver-dashboard', fn (User $usuario) => $usuario->activo
             && $usuario->alMenos(RolUsuario::Supervisor));
 
+        // RF-18: gestión de catálogos (flotas, tipos de equipo, equipos,
+        // checklist, configuraciones) — abierta desde supervisor. La gestión
+        // de usuarios es la excepción: vive aparte en `UserPolicy`, reservada
+        // a administrador, porque ahí se asignan roles y se crean cuentas.
         Gate::define('administrar', fn (User $usuario) => $usuario->activo
-            && $usuario->alMenos(RolUsuario::Administrador));
+            && $usuario->alMenos(RolUsuario::Supervisor));
     }
 }

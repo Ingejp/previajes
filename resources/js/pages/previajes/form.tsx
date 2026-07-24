@@ -147,7 +147,10 @@ export default function PreviajeForm({
         <AppLayout breadcrumbs={migas}>
             <Head title={editando ? 'Editar previaje' : 'Nuevo previaje'} />
 
-            <form onSubmit={enviar} className="flex flex-col gap-4 p-4 pb-28 sm:gap-6 sm:p-6 lg:pb-6">
+            <form
+                onSubmit={enviar}
+                className="flex flex-col gap-4 p-4 pb-[calc(7rem+env(safe-area-inset-bottom))] sm:gap-6 sm:p-6 lg:pb-6"
+            >
                 <section className="rounded-xl border border-sidebar-border/70 bg-card p-4 sm:p-6 dark:border-sidebar-border">
                     <h2 className="text-base font-semibold sm:text-lg">Datos generales</h2>
 
@@ -243,8 +246,19 @@ export default function PreviajeForm({
                 {/*
                     En móvil la barra de envío queda fija abajo, al alcance del
                     pulgar; en escritorio vuelve al flujo normal (RNF-00).
+
+                    Fondo sólido en vez de `backdrop-blur`: el desenfoque exige
+                    recomponer esta capa en cada frame de scroll, y en hardware
+                    móvil modesto eso es una causa conocida de scroll trabado o
+                    con parones — un costo que un GPU de escritorio no revela.
+
+                    El padding inferior sigue `env(safe-area-inset-bottom)` para
+                    no quedar pegado a la barra de gestos/home del teléfono.
                 */}
-                <div className="fixed inset-x-0 bottom-0 z-10 flex items-center gap-3 border-t border-sidebar-border/70 bg-background/95 p-4 backdrop-blur lg:static lg:rounded-xl lg:border lg:bg-card">
+                <div
+                    className="fixed inset-x-0 bottom-0 z-10 flex items-center gap-3 border-t border-sidebar-border/70 bg-background p-4 lg:static lg:rounded-xl lg:border lg:bg-card"
+                    style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }}
+                >
                     <div className="flex-1 text-sm">
                         {totalHallazgos > 0 ? (
                             <span className="flex items-center gap-1.5 font-medium text-amber-600 dark:text-amber-500">

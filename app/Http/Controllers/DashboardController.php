@@ -69,6 +69,7 @@ class DashboardController extends Controller
                     ->count();
 
                 return [
+                    'flota_id' => $flota->id,
                     'flota' => $flota->nombre,
                     'total' => $flota->equipos_count,
                     'inspeccionados' => $hechos,
@@ -171,10 +172,14 @@ class DashboardController extends Controller
                 ->sortByDesc('galones')
                 ->values()
                 ->all(),
+            // Se agrupa por el id del equipo, no por su código: el código no
+            // identifica el registro al que hay que llevar al usuario si dos
+            // equipos de flotas distintas compartieran numeración.
             'porEquipo' => $respuestas
-                ->groupBy(fn ($r) => $r->previaje->equipo->codigo)
-                ->map(fn ($grupo, $codigo) => [
-                    'equipo' => $codigo,
+                ->groupBy(fn ($r) => $r->previaje->equipo_id)
+                ->map(fn ($grupo) => [
+                    'equipo_id' => $grupo->first()->previaje->equipo_id,
+                    'equipo' => $grupo->first()->previaje->equipo->codigo,
                     'flota' => $grupo->first()->previaje->flota->nombre,
                     'galones' => round((float) $grupo->sum('cantidad_agregada'), 2),
                 ])
@@ -183,9 +188,10 @@ class DashboardController extends Controller
                 ->values()
                 ->all(),
             'porFlota' => $respuestas
-                ->groupBy(fn ($r) => $r->previaje->flota->nombre)
-                ->map(fn ($grupo, $flota) => [
-                    'flota' => $flota,
+                ->groupBy(fn ($r) => $r->previaje->flota_id)
+                ->map(fn ($grupo) => [
+                    'flota_id' => $grupo->first()->previaje->flota_id,
+                    'flota' => $grupo->first()->previaje->flota->nombre,
                     'galones' => round((float) $grupo->sum('cantidad_agregada'), 2),
                 ])
                 ->sortByDesc('galones')
@@ -211,9 +217,10 @@ class DashboardController extends Controller
         return [
             'total' => (int) $registros->sum('cantidad'),
             'porEquipo' => $registros
-                ->groupBy(fn ($r) => $r->equipo->codigo)
-                ->map(fn ($grupo, $codigo) => [
-                    'equipo' => $codigo,
+                ->groupBy('equipo_id')
+                ->map(fn ($grupo) => [
+                    'equipo_id' => $grupo->first()->equipo_id,
+                    'equipo' => $grupo->first()->equipo->codigo,
                     'flota' => $grupo->first()->equipo->flota->nombre,
                     'llantas' => (int) $grupo->sum('cantidad'),
                 ])

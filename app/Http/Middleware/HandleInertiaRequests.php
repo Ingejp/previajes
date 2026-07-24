@@ -2,7 +2,7 @@
 
 namespace App\Http\Middleware;
 
-use Illuminate\Foundation\Inspiring;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -28,23 +28,40 @@ class HandleInertiaRequests extends Middleware
     }
 
     /**
-     * Define the props that are shared by default.
+     * Props compartidos por todas las pantallas.
      *
-     * @see https://inertiajs.com/shared-data
+     * Los permisos se comparten para decidir qué se muestra en el menú, pero
+     * cada acción se vuelve a autorizar en el backend: ocultar un enlace no es
+     * un control de acceso (§7).
      *
      * @return array<string, mixed>
      */
     public function share(Request $request): array
     {
-        [$message, $author] = str(Inspiring::quotes()->random())->explode('-');
+        $usuario = $request->user();
 
-        return array_merge(parent::share($request), [
+        return [
             ...parent::share($request),
             'name' => config('app.name'),
-            'quote' => ['message' => trim($message), 'author' => trim($author)],
             'auth' => [
-                'user' => $request->user(),
+                'user' => $usuario ? [
+                    'id' => $usuario->id,
+                    'name' => $usuario->name,
+                    'email' => $usuario->email,
+                    'rol' => $usuario->rol->value,
+                    'rol_etiqueta' => $usuario->rol->etiqueta(),
+                    'flota' => $usuario->flota?->nombre,
+                ] : null,
+                'permisos' => $usuario ? [
+                    'ver_auditoria' => Gate::allows('ver-auditoria'),
+                    'ver_dashboard' => Gate::allows('ver-dashboard'),
+                    'administrar' => Gate::allows('administrar'),
+                ] : [],
             ],
-        ]);
+            'flash' => [
+                'exito' => fn () => $request->session()->get('exito'),
+                'error' => fn () => $request->session()->get('error'),
+            ],
+        ];
     }
 }

@@ -12,11 +12,13 @@ use App\Models\TipoEquipo;
 use App\Models\User;
 use App\Services\ChecklistService;
 use App\Services\PreviajeService;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class PreviajeController extends Controller
 {
@@ -35,23 +37,9 @@ class PreviajeController extends Controller
 
         $usuario = $request->user();
 
-        $previajes = Previaje::query()
-            ->deFlotasVisibles($usuario)
-            // El mecánico ve su propio historial, no el de sus compañeros.
-            ->when($usuario->esMecanico(), fn ($q) => $q->where('mecanico_id', $usuario->id))
-            ->when($request->integer('flota_id'), fn ($q, $id) => $q->where('flota_id', $id))
-            ->when($request->integer('equipo_id'), fn ($q, $id) => $q->where('equipo_id', $id))
-            ->when($request->integer('mecanico_id'), fn ($q, $id) => $q->where('mecanico_id', $id))
-            ->when($request->string('estatus')->toString(), fn ($q, $e) => $q->where('estatus', $e))
-            ->when($request->integer('tipo_equipo_id'), fn ($q, $id) => $q->whereHas(
-                'equipo',
-                fn ($e) => $e->where('tipo_equipo_id', $id),
-            ))
-            ->when($request->date('desde'), fn ($q, $f) => $q->where('created_at', '>=', $f->startOfDay()))
-            ->when($request->date('hasta'), fn ($q, $f) => $q->where('created_at', '<=', $f->endOfDay()))
+        $previajes = $this->historialFiltrado($request)
             ->with(['equipo:id,codigo,tipo_equipo_id', 'equipo.tipoEquipo:id,nombre', 'mecanico:id,name', 'flota:id,nombre'])
             ->withCount('fotos')
-            ->latest()
             ->paginate(20)
             ->withQueryString();
 
@@ -177,6 +165,70 @@ class PreviajeController extends Controller
         $this->previajes->anular($previaje, $request->user(), $datos['motivo_anulacion']);
 
         return to_route('previajes.show', $previaje)->with('exito', 'Previaje anulado.');
+    }
+
+    /**
+     * RF-15: exportación del historial ya filtrado, a CSV legible por Excel.
+     *
+     * Se transmite por bloques para que un rango largo no cargue la flota
+     * entera en memoria.
+     */
+    public function exportar(Request $request): StreamedResponse
+    {
+        Gate::authorize('viewAny', Previaje::class);
+
+        $consulta = $this->historialFiltrado($request)
+            ->with(['equipo.tipoEquipo:id,nombre', 'mecanico:id,name', 'flota:id,nombre']);
+
+        $nombre = 'previajes-'.now()->format('Y-m-d-His').'.csv';
+
+        return response()->streamDownload(function () use ($consulta) {
+            $salida = fopen('php://output', 'w');
+            fwrite($salida, "\xEF\xBB\xBF"); // BOM, para que Excel respete los acentos
+
+            fputcsv($salida, ['Fecha', 'Equipo', 'Tipo', 'Flota', 'Mecánico', 'Kilometraje', 'Horómetro', 'Estatus']);
+
+            foreach ($consulta->lazy() as $previaje) {
+                fputcsv($salida, [
+                    $previaje->created_at->format('Y-m-d H:i:s'),
+                    $previaje->equipo->codigo,
+                    $previaje->equipo->tipoEquipo->nombre,
+                    $previaje->flota->nombre,
+                    $previaje->mecanico->name,
+                    $previaje->kilometraje,
+                    $previaje->horometro,
+                    $previaje->estatus->etiqueta(),
+                ]);
+            }
+
+            fclose($salida);
+        }, $nombre, ['Content-Type' => 'text/csv; charset=UTF-8']);
+    }
+
+    /**
+     * Consulta base del historial (RF-15), compartida por el listado y la
+     * exportación para que ambos apliquen exactamente los mismos filtros y el
+     * mismo recorte por rol.
+     */
+    private function historialFiltrado(Request $request): Builder
+    {
+        $usuario = $request->user();
+
+        return Previaje::query()
+            ->deFlotasVisibles($usuario)
+            // El mecánico ve su propio historial, no el de sus compañeros.
+            ->when($usuario->esMecanico(), fn ($q) => $q->where('mecanico_id', $usuario->id))
+            ->when($request->integer('flota_id'), fn ($q, $id) => $q->where('flota_id', $id))
+            ->when($request->integer('equipo_id'), fn ($q, $id) => $q->where('equipo_id', $id))
+            ->when($request->integer('mecanico_id'), fn ($q, $id) => $q->where('mecanico_id', $id))
+            ->when($request->string('estatus')->toString(), fn ($q, $e) => $q->where('estatus', $e))
+            ->when($request->integer('tipo_equipo_id'), fn ($q, $id) => $q->whereHas(
+                'equipo',
+                fn ($e) => $e->where('tipo_equipo_id', $id),
+            ))
+            ->when($request->date('desde'), fn ($q, $f) => $q->where('created_at', '>=', $f->startOfDay()))
+            ->when($request->date('hasta'), fn ($q, $f) => $q->where('created_at', '<=', $f->endOfDay()))
+            ->latest();
     }
 
     /** @return array<int, array<string, mixed>> */

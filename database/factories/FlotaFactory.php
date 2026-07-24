@@ -2,10 +2,11 @@
 
 namespace Database\Factories;
 
+use App\Models\Flota;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends Factory<\App\Models\Flota>
+ * @extends Factory<Flota>
  */
 class FlotaFactory extends Factory
 {

@@ -2,11 +2,12 @@
 
 namespace Database\Factories;
 
+use App\Models\ChecklistOpcion;
 use App\Models\ChecklistSeccion;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends Factory<\App\Models\ChecklistOpcion>
+ * @extends Factory<ChecklistOpcion>
  */
 class ChecklistOpcionFactory extends Factory
 {

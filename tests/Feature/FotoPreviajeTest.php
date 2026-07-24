@@ -1,7 +1,6 @@
 <?php
 
 use App\Enums\RolUsuario;
-use App\Jobs\ComprimirFotoPreviaje;
 use App\Models\ChecklistItem;
 use App\Models\ChecklistOpcion;
 use App\Models\ChecklistSeccion;

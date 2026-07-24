@@ -6,6 +6,7 @@ use App\Models\ChecklistOpcion;
 use App\Models\ChecklistSeccion;
 use App\Models\Equipo;
 use App\Models\Flota;
+use App\Models\Previaje;
 use App\Models\TipoEquipo;
 use App\Models\User;
 use Inertia\Testing\AssertableInertia;
@@ -109,7 +110,6 @@ it('muestra al mecánico sólo su propio historial', function () {
     crearPreviajeSimple($this, $this->mecanico);
     crearPreviajeSimple($this, $otroMecanico);
 
-
     $this->actingAs($this->mecanico)
         ->get(route('previajes.index'))
         ->assertInertia(fn (AssertableInertia $page) => $page
@@ -157,7 +157,7 @@ it('exige sesión iniciada en todas las pantallas de previajes', function () {
 });
 
 /** Crea un previaje mínimo válido para el cabezal de la flota principal. */
-function crearPreviajeSimple(object $ctx, User $mecanico): App\Models\Previaje
+function crearPreviajeSimple(object $ctx, User $mecanico): Previaje
 {
     $secciones = $ctx->cabezal->secciones()
         ->with(['items' => fn ($q) => $q->where('activo', true), 'opciones'])
@@ -184,5 +184,5 @@ function crearPreviajeSimple(object $ctx, User $mecanico): App\Models\Previaje
         'respuestas' => $respuestas,
     ])->assertSessionHasNoErrors();
 
-    return App\Models\Previaje::latest('id')->first();
+    return Previaje::latest('id')->first();
 }

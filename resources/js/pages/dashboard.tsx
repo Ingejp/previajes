@@ -60,24 +60,29 @@ export default function Dashboard({
                 <div className="flex flex-wrap items-end gap-3">
                     <h1 className="flex-1 text-xl font-semibold sm:text-2xl">Estatus de flota</h1>
 
-                    <label className="flex flex-col gap-1 text-xs">
-                        <span className="font-medium text-muted-foreground">Desde</span>
-                        <input
-                            type="date"
-                            value={periodo.desde}
-                            onChange={(e) => cambiarPeriodo('desde', e.target.value)}
-                            className="h-10 rounded-md border border-input bg-background px-3 text-sm"
-                        />
-                    </label>
-                    <label className="flex flex-col gap-1 text-xs">
-                        <span className="font-medium text-muted-foreground">Hasta</span>
-                        <input
-                            type="date"
-                            value={periodo.hasta}
-                            onChange={(e) => cambiarPeriodo('hasta', e.target.value)}
-                            className="h-10 rounded-md border border-input bg-background px-3 text-sm"
-                        />
-                    </label>
+                    {/* Agrupados para que envuelvan juntos como unidad: si no
+                        alcanza el ancho, bajan los dos a la vez, nunca uno
+                        separado del otro. */}
+                    <div className="flex gap-3">
+                        <label className="flex flex-col gap-1 text-xs">
+                            <span className="font-medium text-muted-foreground">Desde</span>
+                            <input
+                                type="date"
+                                value={periodo.desde}
+                                onChange={(e) => cambiarPeriodo('desde', e.target.value)}
+                                className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+                            />
+                        </label>
+                        <label className="flex flex-col gap-1 text-xs">
+                            <span className="font-medium text-muted-foreground">Hasta</span>
+                            <input
+                                type="date"
+                                value={periodo.hasta}
+                                onChange={(e) => cambiarPeriodo('hasta', e.target.value)}
+                                className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+                            />
+                        </label>
+                    </div>
                 </div>
 
                 {/* Cada tarjeta lleva a la lista que agrupa: previajes o equipos filtrados. */}

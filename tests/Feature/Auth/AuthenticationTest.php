@@ -64,6 +64,25 @@ class AuthenticationTest extends TestCase
         $this->actingAs($user)->get('/')->assertRedirect(route('previajes.index', absolute: false));
     }
 
+    /**
+     * El middleware 'guest' manda a quien ya inició sesión y visita /login a
+     * otro lado; por defecto Laravel prioriza la ruta "dashboard" sin mirar
+     * el rol, lo que le daba un 403 a un mecánico ya logueado.
+     */
+    public function test_already_logged_in_mecanico_visiting_login_is_not_sent_to_dashboard()
+    {
+        $user = User::factory()->create(['rol' => RolUsuario::Mecanico]);
+
+        $this->actingAs($user)->get('/login')->assertRedirect(route('previajes.index', absolute: false));
+    }
+
+    public function test_already_logged_in_supervisor_visiting_login_goes_to_dashboard()
+    {
+        $user = User::factory()->create(['rol' => RolUsuario::Supervisor]);
+
+        $this->actingAs($user)->get('/login')->assertRedirect(route('dashboard', absolute: false));
+    }
+
     public function test_users_can_not_authenticate_with_invalid_password()
     {
         $user = User::factory()->create();

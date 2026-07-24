@@ -3,8 +3,11 @@
 namespace App\Providers;
 
 use App\Listeners\RegistrarAcceso;
+use Illuminate\Auth\Middleware\RedirectIfAuthenticated;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 
@@ -28,5 +31,14 @@ class AppServiceProvider extends ServiceProvider
         if (app()->isProduction()) {
             URL::forceScheme('https');
         }
+
+        // El middleware 'guest' redirige a quien ya inició sesión y visita
+        // /login; por defecto Laravel manda sin condición a la ruta
+        // "dashboard" si existe, y un mecánico no tiene permiso para verla
+        // (le tocaría un 403). Se repite aquí la misma regla que en el "/"
+        // y en el login (RF-17).
+        RedirectIfAuthenticated::redirectUsing(
+            fn (Request $request) => route(Gate::allows('ver-dashboard') ? 'dashboard' : 'previajes.index'),
+        );
     }
 }

@@ -137,26 +137,43 @@ resources/js/pages/ previajes/, equipos/, llantas/, auditoria/, dashboard
 
 ## Estado frente al roadmap
 
-**Fase 1 y Fase 2 implementadas**, salvo lo indicado abajo:
+**Fase 1 y Fase 2 completas**, incluido RF-18:
 
 | Requerimiento | Estado |
 |---|---|
-| RF-01 a RF-04 — autenticación, roles, flotas, equipos | Completo (alta de equipos y usuarios aún sin UI) |
-| RF-05 a RF-08 — checklist administrable y galones | Completo en modelo y seeders; **falta la UI de administración** |
+| RF-01 a RF-04 — autenticación, roles, flotas, equipos | Completo |
+| RF-05 a RF-08 — checklist administrable y galones | Completo |
 | RF-09 a RF-14 — previaje, fotos, edición, alertas | Completo |
 | RF-15, RF-16, RF-16.1 — historial, equipos, umbral | Completo |
 | RF-17, RF-17.1 — dashboard, consumos, llantas | Completo |
-| RF-18 — CRUD de catálogos | **Pendiente** (ver abajo) |
+| RF-18 — CRUD de catálogos | Completo |
 | RF-19, RF-20 — auditoría y pantalla de monitoreo | Completo |
 | RNF-00 a RNF-10 | Completo |
 
-### Pendiente: RF-18, la UI de administración de catálogos
+### RF-18 — administración de catálogos
 
-El modelo, las políticas y la auditoría de los catálogos ya están; lo que falta
-son las pantallas para editarlos desde el navegador. Mientras tanto se
-administran por seeder o por `php artisan tinker`. Es el siguiente trabajo
-natural, y no bloquea el uso del módulo: el checklist del Anexo A ya viene
-precargado.
+Pantallas en `/catalogos`, restringidas al administrador y al super
+administrador (`Gate::authorize('administrar')` en cada controlador):
+
+- **Flotas, tipos de equipo, equipos** — alta/edición/baja con diálogo modal;
+  la baja se bloquea (con aviso) si el registro tiene equipos, usuarios o
+  previajes que dependen de él, en vez de romper el historial.
+- **Secciones de checklist** — con sus ítems y opciones administrados en la
+  misma pantalla (RF-06, RF-07), y su asociación a tipos de equipo (RN-07).
+  Un ítem o una opción ya usados en un previaje no se pueden borrar: la base
+  de datos lo impide vía FK `restrictOnDelete` y el controlador traduce esa
+  excepción a un mensaje legible.
+- **Usuarios** — sin botón de eliminar a propósito: se desactivan (lo que ya
+  cierra su sesión de inmediato vía `AsegurarUsuarioActivo`). Nadie salvo un
+  super administrador puede crear o editar una cuenta con ese rol
+  (`UserPolicy::asignarRol`), y esas filas ni siquiera aparecen en el listado
+  para un administrador (RN-09).
+- **Configuraciones** — clave/valor global; la clave no se puede cambiar una
+  vez creada, porque el código la busca por nombre fijo.
+
+Los mensajes de éxito/error (`->with('exito', ...)` / `->with('error', ...)`)
+se muestran como un aviso flotante (`FlashMessages`, en el layout autenticado).
+Antes de esto se compartían al frontend pero ninguna pantalla los leía.
 
 ## Decisiones a confirmar con negocio
 

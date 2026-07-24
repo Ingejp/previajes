@@ -41,10 +41,12 @@ class DemoSeeder extends Seeder
                 ],
             );
 
-            // La supervisora cubre las dos flotas, para ejercitar el filtrado
-            // multi-flota de la auditoría (RF-20 / RN-09).
+            // La supervisora cubre una flota adicional a la principal, para
+            // ejercitar el filtrado multi-flota de la auditoría (RF-20 /
+            // RN-09). No se repite Honduras aquí: ya la cubre `flota_id`, y
+            // `flotasAccesibles()` une ambas fuentes.
             if ($rol === RolUsuario::Supervisor) {
-                $usuario->flotas()->sync([$honduras->id, $guatemala->id]);
+                $usuario->flotas()->sync([$guatemala->id]);
             }
         }
 

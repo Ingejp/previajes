@@ -106,3 +106,87 @@ export interface FotoExistente {
     checklist_item_id: number | null;
     url: string;
 }
+
+// --- Catálogos administrables (RF-18) ---
+//
+// Tipos separados de los de arriba a propósito: el formulario de previaje
+// recibe una proyección mínima del checklist (sólo lo que necesita
+// renderizarse), mientras que las pantallas de administración necesitan el
+// modelo completo (activo, orden, asociaciones). Son la misma tabla en la
+// base de datos, pero cada endpoint sirve la forma que le corresponde.
+
+export interface FlotaAdmin {
+    id: number;
+    nombre: string;
+    pais: string;
+    activo: boolean;
+    equipos_count: number;
+    usuarios_count: number;
+}
+
+export interface TipoEquipoAdmin {
+    id: number;
+    nombre: string;
+    dias_alerta_sin_previaje: number;
+    activo: boolean;
+    equipos_count: number;
+    secciones: { id: number; nombre: string }[];
+}
+
+export interface EquipoAdmin {
+    id: number;
+    codigo: string;
+    marca: string | null;
+    modelo: string | null;
+    activo: boolean;
+    tipo_equipo_id: number;
+    flota_id: number;
+    tipo_equipo: { id: number; nombre: string };
+    flota: { id: number; nombre: string };
+    previajes_count: number;
+}
+
+export interface UsuarioAdmin {
+    id: number;
+    name: string;
+    email: string;
+    rol: Rol;
+    activo: boolean;
+    flota_id: number | null;
+    flota: { id: number; nombre: string } | null;
+    flotas: { id: number; nombre: string }[];
+}
+
+export interface ChecklistItemAdmin {
+    id: number;
+    seccion_id: number;
+    descripcion: string;
+    es_fluido: boolean;
+    orden: number;
+    activo: boolean;
+}
+
+export interface ChecklistOpcionAdmin {
+    id: number;
+    seccion_id: number;
+    etiqueta: string;
+    es_optima: boolean;
+    orden: number;
+}
+
+export interface ChecklistSeccionAdmin {
+    id: number;
+    nombre: string;
+    orden: number;
+    activo: boolean;
+    items: ChecklistItemAdmin[];
+    opciones: ChecklistOpcionAdmin[];
+    tipos_equipo: { id: number; nombre: string }[];
+}
+
+export interface ConfiguracionAdmin {
+    id: number;
+    clave: string;
+    valor: string;
+    descripcion: string | null;
+}
